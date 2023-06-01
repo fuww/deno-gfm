@@ -12,6 +12,8 @@ export { CSS, KATEX_CSS, Marked };
 
 Marked.marked.use(gfmHeadingId());
 
+type MarkedOptionsWithImageTag = Marked.Renderer['options'] & {imageTag?: ImageTag};
+
 class Renderer extends Marked.Renderer {
   heading(
     text: string,
@@ -24,6 +26,11 @@ class Renderer extends Marked.Renderer {
   }
 
   image(src: string, title: string | null, alt: string | null) {
+    const options = (this.options as MarkedOptionsWithImageTag);
+    if (typeof options.imageTag === 'function') {
+      return options.imageTag(src, title, alt);
+    }
+
     return `<img src="${src}" alt="${alt ?? ""}" title="${title ?? ""}" />`;
   }
 
@@ -86,6 +93,8 @@ function mathify(markdown: string) {
   return markdown;
 }
 
+type ImageTag = (src: string, title: string | null, alt: string | null) => string;
+
 export interface RenderOptions {
   baseUrl?: string;
   mediaBaseUrl?: string;
@@ -93,6 +102,7 @@ export interface RenderOptions {
   allowIframes?: boolean;
   allowMath?: boolean;
   disableHtmlSanitization?: boolean;
+  imageTag?: ImageTag;
 }
 
 export function render(markdown: string, opts: RenderOptions = {}): string {
@@ -104,6 +114,7 @@ export function render(markdown: string, opts: RenderOptions = {}): string {
     baseUrl: opts.baseUrl,
     gfm: true,
     renderer: new Renderer(),
+    imageTag: opts.imageTag
   };
 
   const html = opts.inline
