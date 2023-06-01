@@ -103,6 +103,8 @@ export interface RenderOptions {
   allowMath?: boolean;
   disableHtmlSanitization?: boolean;
   imageTag?: ImageTag;
+  allowedTags?: string[];
+  allowedAttributes?: Record<string, string[]>,
 }
 
 export function render(markdown: string, opts: RenderOptions = {}): string {
@@ -125,18 +127,20 @@ export function render(markdown: string, opts: RenderOptions = {}): string {
     return html;
   }
 
-  let allowedTags = sanitizeHtml.defaults.allowedTags.concat([
-    "img",
-    "video",
-    "svg",
-    "path",
-    "circle",
-    "figure",
-    "figcaption",
-    "del",
-    "details",
-    "summary",
-  ]);
+  let allowedTags = sanitizeHtml.defaults.allowedTags
+    .concat(opts.allowedTags ?? [])
+    .concat([
+      "img",
+      "video",
+      "svg",
+      "path",
+      "circle",
+      "figure",
+      "figcaption",
+      "del",
+      "details",
+      "summary",
+    ]);
   if (opts.allowIframes) {
     allowedTags.push("iframe");
   }
@@ -220,6 +224,7 @@ export function render(markdown: string, opts: RenderOptions = {}): string {
       iframe: ["src", "width", "height"], // Only used when iframe tags are allowed in the first place.
       math: ["xmlns"], // Only enabled when math is enabled
       annotation: ["encoding"], // Only enabled when math is enabled
+      ...opts.allowedAttributes,
     },
     allowedClasses: {
       div: ["highlight", "highlight-source-*", "notranslate"],
